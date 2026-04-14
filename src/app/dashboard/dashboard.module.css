@@ -1,0 +1,446 @@
+/* ============================================================
+   Dashboard Styles
+   ============================================================ */
+
+/* --- Layout ------------------------------------------------- */
+.dashboardWrapper {
+  display: flex;
+  min-height: 100dvh;
+}
+
+.loadingScreen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Sidebar ------------------------------------------------ */
+.sidebar {
+  display: none;
+  width: 240px;
+  padding: var(--space-5);
+  border-right: 1px solid var(--color-glass-border);
+  background: var(--color-bg-secondary);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    display: flex;
+  }
+}
+
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-8);
+  padding: var(--space-2);
+}
+
+.sidebarBrandName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--color-accent), #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.sidebarLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.sidebarLink:hover {
+  color: var(--color-text-primary);
+  background: var(--color-glass-bg);
+}
+
+.sidebarLinkActive {
+  color: var(--color-accent) !important;
+  background: var(--color-accent-light) !important;
+}
+
+.logoutBtn {
+  margin-top: auto;
+  width: 100%;
+  text-align: left;
+  color: var(--color-text-muted);
+}
+
+.logoutBtn:hover {
+  color: var(--color-error);
+}
+
+/* --- Main Content ------------------------------------------- */
+.mainContent {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 80px; /* Space for mobile nav */
+}
+
+@media (min-width: 768px) {
+  .mainContent {
+    padding-bottom: 0;
+  }
+}
+
+/* --- Mobile Bottom Nav -------------------------------------- */
+.mobileNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: var(--space-2) 0 calc(var(--space-2) + env(safe-area-inset-bottom));
+  z-index: var(--z-nav);
+}
+
+@media (min-width: 768px) {
+  .mobileNav {
+    display: none;
+  }
+}
+
+.mobileNavLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  transition: color var(--transition-fast);
+}
+
+.mobileNavLink:hover {
+  color: var(--color-text-primary);
+}
+
+.mobileNavLinkActive {
+  color: var(--color-accent);
+}
+
+.mobileNavLabel {
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-medium);
+}
+
+/* --- Dashboard Page ----------------------------------------- */
+.dashboardPage {
+  padding: var(--space-6);
+  max-width: 800px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.statCard {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.statCard:hover {
+  transform: none;
+}
+
+.statNumber {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.actionCard {
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* --- Menu Management ---------------------------------------- */
+.menuPage {
+  padding: var(--space-6);
+  max-width: 800px;
+}
+
+.menuHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.categorySection {
+  margin-bottom: var(--space-6);
+}
+
+.categorySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-glass-bg);
+  border-radius: var(--radius-lg);
+}
+
+.categoryActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.menuItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-glass-border);
+}
+
+.menuItemRow:last-child {
+  border-bottom: none;
+}
+
+.menuItemInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.menuItemName {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menuItemPrice {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.toggle.toggleActive {
+  background: var(--color-success);
+}
+
+.toggleDot {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-fast);
+}
+
+.toggleActive .toggleDot {
+  transform: translateX(20px);
+}
+
+/* --- QR Codes Page ------------------------------------------ */
+.qrPage {
+  padding: var(--space-6);
+  max-width: 800px;
+}
+
+.qrPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+}
+
+.qrActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.qrList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.qrListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+}
+
+/* --- Profile Page ------------------------------------------- */
+.profilePage {
+  padding: var(--space-6);
+  max-width: 600px;
+}
+
+.profileForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* --- Modal Form --------------------------------------------- */
+.formModal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.formModalBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.formModalContent {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85dvh;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .formModal {
+    align-items: center;
+  }
+
+  .formModalContent {
+    border-radius: var(--radius-2xl);
+    max-height: 90vh;
+  }
+}
+
+.formModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* --- Toast -------------------------------------------------- */
+.toast {
+  position: fixed;
+  bottom: calc(80px + var(--space-4));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  z-index: var(--z-toast);
+  animation: toastIn var(--transition-base) ease forwards;
+}
+
+.toastSuccess {
+  background: var(--color-success);
+  color: white;
+}
+
+.toastError {
+  background: var(--color-error);
+  color: white;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (min-width: 768px) {
+  .toast {
+    bottom: var(--space-6);
+  }
+}

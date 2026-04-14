@@ -1,0 +1,272 @@
+/* ============================================================
+   Landing Page Styles
+   ============================================================ */
+
+/* --- Navigation --------------------------------------------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  padding: var(--space-3) 0;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--color-text-primary);
+}
+
+.brandIcon {
+  font-size: 1.5rem;
+}
+
+.brandName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--color-accent), #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* --- Hero Section ------------------------------------------- */
+.hero {
+  position: relative;
+  min-height: calc(100dvh - 60px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: var(--space-8) 0;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-accent-light);
+  border: 1px solid var(--color-accent-glow);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-accent);
+  margin-bottom: var(--space-6);
+}
+
+.heroTitle {
+  font-size: clamp(2.2rem, 5vw + 1rem, 4rem);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-5);
+}
+
+.heroAccent {
+  background: linear-gradient(135deg, var(--color-accent), #fbbf24, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroDescription {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 520px;
+  margin-bottom: var(--space-8);
+}
+
+.heroCTA {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 320px;
+}
+
+@media (min-width: 480px) {
+  .heroCTA {
+    flex-direction: row;
+    max-width: none;
+    width: auto;
+  }
+}
+
+/* Floating food emojis */
+.floatingElements {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.float1, .float2, .float3, .float4 {
+  position: absolute;
+  font-size: 2.5rem;
+  opacity: 0.15;
+  animation: floatAnimation 6s ease-in-out infinite;
+}
+
+.float1 { top: 15%; left: 10%; animation-delay: 0s; }
+.float2 { top: 25%; right: 8%; animation-delay: 1.5s; }
+.float3 { bottom: 30%; left: 5%; animation-delay: 3s; }
+.float4 { bottom: 15%; right: 12%; animation-delay: 4.5s; }
+
+@keyframes floatAnimation {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+/* --- How It Works ------------------------------------------- */
+.howItWorks {
+  padding: var(--space-16) 0;
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.sectionSubtitle {
+  text-align: center;
+  margin-bottom: var(--space-10);
+  font-size: var(--font-size-lg);
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .stepsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.step {
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  position: relative;
+}
+
+.step:hover {
+  transform: translateY(-4px);
+}
+
+.stepNumber {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepIcon {
+  font-size: 3rem;
+  margin-bottom: var(--space-2);
+}
+
+/* --- Features ----------------------------------------------- */
+.features {
+  padding: var(--space-16) 0;
+  background: linear-gradient(180deg, transparent, rgba(245, 158, 11, 0.02), transparent);
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 480px) {
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .featuresGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.featureCard {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.featureCard:hover {
+  transform: translateY(-2px);
+}
+
+.featureIcon {
+  font-size: 2rem;
+  margin-bottom: var(--space-1);
+}
+
+.featureTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* --- CTA Section -------------------------------------------- */
+.ctaSection {
+  padding: var(--space-16) 0;
+}
+
+/* --- Footer ------------------------------------------------- */
+.footer {
+  border-top: 1px solid var(--color-glass-border);
+  padding: var(--space-6) 0;
+}
+
+.footerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footerBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

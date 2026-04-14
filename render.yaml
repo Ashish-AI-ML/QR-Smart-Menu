@@ -1,0 +1,38 @@
+services:
+  # 1. PocketBase Backend
+  - type: web
+    name: smart-menu-pb
+    env: docker
+    dockerContext: pocketbase
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8080
+    disk:
+      name: pb_data
+      mountPath: /pb/pb_data
+      sizeGB: 1
+
+  # 2. Next.js Frontend
+  - type: web
+    name: smart-menu-web
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_PUBLIC_POCKETBASE_URL
+        fromService:
+          name: smart-menu-pb
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false # Set this manually to web service URL if needed
+      - key: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+        sync: false
