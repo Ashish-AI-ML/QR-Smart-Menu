@@ -1,7 +1,7 @@
 FROM alpine:latest
 
 # You can use a newer version of the precompiled binary here if needed
-ARG PB_VERSION=0.22.10
+ARG PB_VERSION=0.36.8
 
 RUN apk add --no-cache \
     unzip \
