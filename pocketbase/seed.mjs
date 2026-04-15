@@ -1,11 +1,9 @@
 /**
- * PocketBase Setup Script — v0.36 compatible
- * Creates collections + seeds "Spice Garden" demo
- * 
- * Run: node scripts/setup-pocketbase.mjs
+ * Combined auto-seed script for PocketBase on Render Free Tier
+ * Runs inside the Docker container on every startup to restore data
  */
 
-const PB_URL = "https://qr-smart-menu.onrender.com";
+const PB_URL = "http://127.0.0.1:8080";
 const ADMIN_EMAIL = "admin@smartmenu.com";
 const ADMIN_PASSWORD = "Admin@12345";
 
@@ -21,13 +19,28 @@ async function api(path, options = {}) {
     },
   });
   const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`${res.status} ${path}: ${text}`);
-  }
+  if (!res.ok) throw new Error(`${res.status} ${path}: ${text}`);
   try { return JSON.parse(text); } catch { return text; }
 }
 
+async function waitForServer() {
+  console.log("⏳ Waiting for PocketBase to be ready...");
+  for (let i = 0; i < 30; i++) {
+    try {
+      await fetch(`${PB_URL}/api/health`);
+      console.log("✅ PocketBase is ready!\n");
+      return true;
+    } catch {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  console.log("❌ PocketBase did not start in time");
+  return false;
+}
+
 async function main() {
+  if (!(await waitForServer())) return;
+
   // --- Authenticate ---
   console.log("🔐 Authenticating...");
   const auth = await api("/api/collections/_superusers/auth-with-password", {
@@ -37,161 +50,112 @@ async function main() {
   AUTH_TOKEN = auth.token;
   console.log("✅ Authenticated!\n");
 
+  // --- Check if already seeded ---
+  try {
+    const test = await api("/api/collections/restaurants/records");
+    if ((test.items || []).length > 0) {
+      console.log("✅ Data already exists, skipping seed.");
+      return;
+    }
+  } catch { /* collection doesn't exist yet, continue */ }
+
   // --- Get existing collections ---
   let existing = [];
   try {
     const res = await api("/api/collections");
     existing = (res.items || res || []).map(c => c.name);
   } catch { /* ignore */ }
-  console.log("Existing collections:", existing.join(", ") || "none");
 
   // --- Create Collections ---
-  // 1. restaurants
-  if (!existing.includes("restaurants")) {
-    console.log("\n📦 Creating 'restaurants'...");
+  const colIds = {};
+
+  const collections = [
+    {
+      name: "restaurants",
+      type: "base",
+      listRule: "", viewRule: "", createRule: "@request.auth.id != ''", updateRule: "@request.auth.id != ''", deleteRule: "@request.auth.id != ''",
+      fields: [
+        { name: "name", type: "text", required: true },
+        { name: "slug", type: "text", required: true },
+        { name: "description", type: "text" },
+        { name: "logo", type: "text" },
+        { name: "banner", type: "text" },
+        { name: "address", type: "text" },
+        { name: "phone", type: "text" },
+        { name: "themeColor", type: "text" },
+        { name: "operatingHours", type: "json" },
+        { name: "isActive", type: "bool" },
+        { name: "owner", type: "relation", collectionId: "_pb_users_auth_", maxSelect: 1 }
+      ]
+    },
+    {
+      name: "categories",
+      type: "base",
+      listRule: "", viewRule: "", createRule: "@request.auth.id != ''", updateRule: "@request.auth.id != ''", deleteRule: "@request.auth.id != ''",
+      fields: [
+        { name: "restaurant", type: "relation", required: true, maxSelect: 1 },
+        { name: "name", type: "text", required: true },
+        { name: "icon", type: "text" },
+        { name: "displayOrder", type: "number" },
+        { name: "isActive", type: "bool" }
+      ]
+    },
+    {
+      name: "menu_items",
+      type: "base",
+      listRule: "", viewRule: "", createRule: "@request.auth.id != ''", updateRule: "@request.auth.id != ''", deleteRule: "@request.auth.id != ''",
+      fields: [
+        { name: "category", type: "relation", required: true, maxSelect: 1 },
+        { name: "restaurant", type: "relation", required: true, maxSelect: 1 },
+        { name: "name", type: "text", required: true },
+        { name: "description", type: "text" },
+        { name: "price", type: "number", required: true },
+        { name: "discountPrice", type: "number" },
+        { name: "image", type: "text" },
+        { name: "dietaryTags", type: "json" },
+        { name: "spiceLevel", type: "number", min: 0, max: 5 },
+        { name: "isAvailable", type: "bool" },
+        { name: "isFeatured", type: "bool" },
+        { name: "displayOrder", type: "number" }
+      ]
+    },
+    {
+      name: "qr_codes",
+      type: "base",
+      listRule: "", viewRule: "", createRule: "@request.auth.id != ''", updateRule: "", deleteRule: "@request.auth.id != ''",
+      fields: [
+        { name: "restaurant", type: "relation", required: true, maxSelect: 1 },
+        { name: "code", type: "text", required: true },
+        { name: "tableNumber", type: "text" },
+        { name: "scanCount", type: "number" },
+        { name: "isActive", type: "bool" }
+      ]
+    }
+  ];
+
+  for (const col of collections) {
+    if (existing.includes(col.name)) { console.log(`⏭️  ${col.name} exists`); continue; }
+    console.log(`📦 Creating ${col.name}...`);
+
+    // Inject relationship collectionIds
+    if (col.name === "categories") col.fields[0].collectionId = colIds.restaurants;
+    if (col.name === "menu_items") {
+      col.fields[0].collectionId = colIds.categories;
+      col.fields[1].collectionId = colIds.restaurants;
+    }
+    if (col.name === "qr_codes") col.fields[0].collectionId = colIds.restaurants;
+
     try {
-      await api("/api/collections", {
-        method: "POST",
-        body: JSON.stringify({
-          name: "restaurants",
-          type: "base",
-          schema: [
-            { name: "name", type: "text", required: true },
-            { name: "slug", type: "text", required: true },
-            { name: "description", type: "text" },
-            { name: "logo", type: "text" },
-            { name: "banner", type: "text" },
-            { name: "address", type: "text" },
-            { name: "phone", type: "text" },
-            { name: "themeColor", type: "text" },
-            { name: "operatingHours", type: "json" },
-            { name: "isActive", type: "bool" },
-            { name: "owner", type: "relation", options: { collectionId: "_pb_users_auth_", maxSelect: 1 } },
-          ],
-          listRule: null,
-          viewRule: null,
-          createRule: "@request.auth.id != ''",
-          updateRule: "@request.auth.id != ''",
-          deleteRule: "@request.auth.id != ''",
-        }),
-      });
-      console.log("✅ restaurants created");
-    } catch (e) { console.log("❌ restaurants:", e.message.slice(0, 120)); }
-  } else {
-    console.log("⏭️  restaurants already exists");
+      const res = await api("/api/collections", { method: "POST", body: JSON.stringify(col) });
+      colIds[col.name] = res.id;
+      console.log(`✅ ${col.name} created (${res.id})`);
+    } catch (e) { console.log(`❌ ${col.name}: ${e.message.slice(0, 100)}`); return; }
   }
 
-  // Get collection IDs
-  let collectionsData;
-  try {
-    collectionsData = await api("/api/collections");
-    collectionsData = collectionsData.items || collectionsData;
-  } catch { collectionsData = []; }
+  // --- SEED DATA ---
+  console.log("\n🌱 Seeding Spice Garden...\n");
 
-  const getColId = (name) => collectionsData.find(c => c.name === name)?.id;
-  const restaurantsId = getColId("restaurants");
-  console.log("restaurants ID:", restaurantsId);
-
-  // 2. categories
-  if (!existing.includes("categories")) {
-    console.log("\n📦 Creating 'categories'...");
-    try {
-      await api("/api/collections", {
-        method: "POST",
-        body: JSON.stringify({
-          name: "categories",
-          type: "base",
-          schema: [
-            { name: "restaurant", type: "relation", required: true, options: { collectionId: restaurantsId, maxSelect: 1 } },
-            { name: "name", type: "text", required: true },
-            { name: "icon", type: "text" },
-            { name: "displayOrder", type: "number" },
-            { name: "isActive", type: "bool" },
-          ],
-          listRule: null,
-          viewRule: null,
-          createRule: "@request.auth.id != ''",
-          updateRule: "@request.auth.id != ''",
-          deleteRule: "@request.auth.id != ''",
-        }),
-      });
-      console.log("✅ categories created");
-    } catch (e) { console.log("❌ categories:", e.message.slice(0, 120)); }
-  }
-
-  // Refresh IDs
-  try {
-    collectionsData = (await api("/api/collections")).items || await api("/api/collections");
-  } catch { /* ignore */ }
-  const categoriesId = getColId("categories") || collectionsData?.find(c => c.name === "categories")?.id;
-
-  // 3. menu_items
-  if (!existing.includes("menu_items")) {
-    console.log("\n📦 Creating 'menu_items'...");
-    try {
-      await api("/api/collections", {
-        method: "POST",
-        body: JSON.stringify({
-          name: "menu_items",
-          type: "base",
-          schema: [
-            { name: "category", type: "relation", required: true, options: { collectionId: categoriesId, maxSelect: 1 } },
-            { name: "restaurant", type: "relation", required: true, options: { collectionId: restaurantsId, maxSelect: 1 } },
-            { name: "name", type: "text", required: true },
-            { name: "description", type: "text" },
-            { name: "price", type: "number", required: true },
-            { name: "discountPrice", type: "number" },
-            { name: "image", type: "text" },
-            { name: "dietaryTags", type: "json" },
-            { name: "spiceLevel", type: "number" },
-            { name: "isAvailable", type: "bool" },
-            { name: "isFeatured", type: "bool" },
-            { name: "displayOrder", type: "number" },
-          ],
-          listRule: null,
-          viewRule: null,
-          createRule: "@request.auth.id != ''",
-          updateRule: "@request.auth.id != ''",
-          deleteRule: "@request.auth.id != ''",
-        }),
-      });
-      console.log("✅ menu_items created");
-    } catch (e) { console.log("❌ menu_items:", e.message.slice(0, 120)); }
-  }
-
-  // 4. qr_codes
-  if (!existing.includes("qr_codes")) {
-    console.log("\n📦 Creating 'qr_codes'...");
-    try {
-      await api("/api/collections", {
-        method: "POST",
-        body: JSON.stringify({
-          name: "qr_codes",
-          type: "base",
-          schema: [
-            { name: "restaurant", type: "relation", required: true, options: { collectionId: restaurantsId, maxSelect: 1 } },
-            { name: "code", type: "text", required: true },
-            { name: "tableNumber", type: "text" },
-            { name: "scanCount", type: "number" },
-            { name: "isActive", type: "bool" },
-          ],
-          listRule: null,
-          viewRule: null,
-          createRule: "@request.auth.id != ''",
-          updateRule: null,
-          deleteRule: "@request.auth.id != ''",
-        }),
-      });
-      console.log("✅ qr_codes created");
-    } catch (e) { console.log("❌ qr_codes:", e.message.slice(0, 120)); }
-  }
-
-  console.log("\n✅ All collections ready!\n");
-
-  // --- SEED DEMO DATA ---
-  console.log("🌱 Seeding 'Spice Garden'...\n");
-
-  // Create demo user
+  // Create user
   let userId;
   try {
     const user = await api("/api/collections/users/records", {
@@ -204,45 +168,30 @@ async function main() {
       }),
     });
     userId = user.id;
-    console.log("✅ User: owner@spicegarden.com");
-  } catch (e) {
-    console.log("⚠️  User exists, fetching...");
+    console.log("✅ User created");
+  } catch {
     try {
       const r = await api(`/api/collections/users/records?filter=(email='owner@spicegarden.com')`);
       userId = (r.items || r)[0]?.id;
-      console.log("✅ Found user:", userId);
-    } catch { console.log("❌ Could not find user"); }
+    } catch { console.log("❌ Could not create/find user"); }
   }
 
   // Create restaurant
-  let restaurantRecordId;
+  let restId;
   try {
     const r = await api("/api/collections/restaurants/records", {
       method: "POST",
       body: JSON.stringify({
-        name: "Spice Garden",
-        slug: "spice-garden",
+        name: "Spice Garden", slug: "spice-garden",
         description: "Authentic Indian cuisine crafted with love. From aromatic biryanis to sizzling tandoori, every dish tells a story of spice and flavor.",
         address: "42, MG Road, Koramangala, Bangalore 560034",
-        phone: "+91 98765 43210",
-        themeColor: "#f59e0b",
-        isActive: true,
-        owner: userId,
+        phone: "+91 98765 43210", themeColor: "#f59e0b", isActive: true, owner: userId,
         operatingHours: { mon: "11:00-22:30", tue: "11:00-22:30", wed: "11:00-22:30", thu: "11:00-22:30", fri: "11:00-23:00", sat: "11:00-23:00", sun: "12:00-22:00" },
       }),
     });
-    restaurantRecordId = r.id;
+    restId = r.id;
     console.log("✅ Restaurant: Spice Garden");
-  } catch (e) {
-    console.log("⚠️  Restaurant exists, fetching...");
-    try {
-      const r = await api(`/api/collections/restaurants/records?filter=(slug='spice-garden')`);
-      restaurantRecordId = (r.items || r)[0]?.id;
-      console.log("✅ Found restaurant:", restaurantRecordId);
-    } catch { console.log("❌ Could not find restaurant"); }
-  }
-
-  if (!restaurantRecordId) { console.log("❌ No restaurant ID. Stopping."); return; }
+  } catch { console.log("❌ Restaurant failed"); return; }
 
   // Categories
   const cats = [
@@ -260,14 +209,38 @@ async function main() {
     try {
       const r = await api("/api/collections/categories/records", {
         method: "POST",
-        body: JSON.stringify({ ...cat, restaurant: restaurantRecordId, isActive: true }),
+        body: JSON.stringify({ ...cat, restaurant: restId, isActive: true }),
       });
       catIds[cat.name] = r.id;
       console.log(`✅ ${cat.icon} ${cat.name}`);
-    } catch (e) { console.log(`⚠️  ${cat.name}: ${e.message.slice(0, 60)}`); }
+    } catch (e) { console.log(`⚠️ ${cat.name}: ${e.message.slice(0, 60)}`); }
   }
 
-  // Menu Items
+  // Menu Items with images
+  const foodImages = {
+    curry: "https://images.unsplash.com/photo-1565557623262-b51c2513a641",
+    fried: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91",
+    samosa: "https://images.unsplash.com/photo-1601050690597-df0568f70950",
+    biryani: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8",
+    bread: "https://images.unsplash.com/photo-1509440159596-0249088772ff",
+    drink: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd",
+    dessert: "https://images.unsplash.com/photo-1551024601-bec78aea704b",
+    default: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
+  };
+
+  function getImage(name, catName) {
+    const n = (name || "").toLowerCase();
+    const c = (catName || "").toLowerCase();
+    if (n.includes("samosa") || n.includes("roll")) return foodImages.samosa;
+    if (n.includes("chicken 65") || n.includes("tikka")) return foodImages.fried;
+    if (c.includes("biryani") || n.includes("rice")) return foodImages.biryani;
+    if (c.includes("dessert") || n.includes("sweet")) return foodImages.dessert;
+    if (c.includes("beverage") || n.includes("drink") || n.includes("chai") || n.includes("soda") || n.includes("lassi") || n.includes("chaas") || n.includes("lime")) return foodImages.drink;
+    if (c.includes("bread") || n.includes("naan") || n.includes("roti") || n.includes("paratha") || n.includes("bhature")) return foodImages.bread;
+    if (c.includes("main") || n.includes("curry") || n.includes("masala") || n.includes("makhani") || n.includes("paneer") || n.includes("dal") || n.includes("chole") || n.includes("rogan") || n.includes("egg")) return foodImages.curry;
+    return foodImages.default;
+  }
+
   const items = [
     { cat: "Starters", name: "Paneer Tikka", desc: "Marinated cottage cheese cubes grilled in tandoor with bell peppers", price: 24900, tags: ["veg"], spice: 2, feat: false },
     { cat: "Starters", name: "Chicken 65", desc: "Crispy deep-fried chicken with curry leaves and red chilies", price: 27900, tags: ["non-veg"], spice: 4, feat: false },
@@ -307,14 +280,15 @@ async function main() {
       await api("/api/collections/menu_items/records", {
         method: "POST",
         body: JSON.stringify({
-          category: catId, restaurant: restaurantRecordId,
+          category: catId, restaurant: restId,
           name: item.name, description: item.desc, price: item.price,
+          image: getImage(item.name, item.cat),
           dietaryTags: item.tags, spiceLevel: item.spice,
           isAvailable: true, isFeatured: item.feat, displayOrder: i,
         }),
       });
       count++;
-    } catch (e) { console.log(`⚠️  ${item.name}: ${e.message.slice(0, 50)}`); }
+    } catch (e) { console.log(`⚠️ ${item.name}: ${e.message.slice(0, 50)}`); }
   }
   console.log(`\n✅ Created ${count}/${items.length} menu items`);
 
@@ -322,23 +296,12 @@ async function main() {
   try {
     await api("/api/collections/qr_codes/records", {
       method: "POST",
-      body: JSON.stringify({
-        restaurant: restaurantRecordId, code: "spicegdn1",
-        tableNumber: "1", scanCount: 0, isActive: true,
-      }),
+      body: JSON.stringify({ restaurant: restId, code: "spicegdn1", tableNumber: "1", scanCount: 0, isActive: true }),
     });
     console.log("✅ QR code: spicegdn1");
-  } catch (e) { console.log("⚠️  QR:", e.message.slice(0, 50)); }
+  } catch {}
 
-  console.log("\n" + "=".repeat(50));
-  console.log("🎉 SETUP COMPLETE!");
-  console.log("=".repeat(50));
-  console.log("\nAdmin:  admin@smartmenu.com / Admin@12345");
-  console.log("Owner:  owner@spicegarden.com / SpiceGarden@123");
-  console.log("\nMenu:      http://localhost:3000/menu/spice-garden");
-  console.log("Dashboard: http://localhost:3000/dashboard");
-  console.log("QR test:   http://localhost:3000/qr/spicegdn1");
-  console.log("PB Admin:  http://127.0.0.1:8090/_/");
+  console.log("\n🎉 AUTO-SEED COMPLETE!");
 }
 
 main().catch(console.error);

@@ -3,7 +3,7 @@
  * Drops existing collections and recreates them with correct `fields` syntax
  */
 
-const PB_URL = "http://127.0.0.1:8090";
+const PB_URL = "https://qr-smart-menu.onrender.com";
 const ADMIN_EMAIL = "admin@smartmenu.com";
 const ADMIN_PASSWORD = "Admin@12345";
 
